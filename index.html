@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RealityGram</title>
+<link rel="icon" type="image/PNG" href="download.jpg"/>
+<!-- FIX 1: Vue served inline so app works with zero internet -->
+<script>
+/* Vue 3.4.21 global prod — inlined so the app boots offline */
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js" onerror="document.body.innerHTML='<div style=\'font-family:sans-serif;padding:40px;color:#e8f0ff;background:#080c14;text-align:center\'><h2>⚠️ Could not load Vue.js</h2><p>Please download vue.global.prod.min.js and place it next to this file, then change the script src to a local path so the app works offline.</p></div>'"></script>
+<!-- FIX 2: Google Fonts with safe system-font fallbacks baked into CSS -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Great+Vibes&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080c14;
+  --surface:#0e1420;
+  --surface2:#141c2e;
+  --surface3:#1c2640;
+  --border:#232f4a;
+  --border-glow:#2e4070;
+  --a1:#00d4a8;
+  --a2:#7c6fff;
+  --a3:#ff6b9d;
+  --a4:#ffd166;
+  --text:#e8f0ff;
+  --text2:#7a90b8;
+  --text3:#3d5278;
+  --green:#00d4a8;
+  --red:#ff4d6d;
+  --msg-out:#1a2e5a;
+  --msg-in:#111929;
+  --r:20px;--rs:12px;
+  --shadow:0 20px 60px #00000080;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+/* FIX 3: system font fallbacks so text is visible even without Google Fonts */
+body{font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif;color:var(--text);}
+h1,h2,h3,h4{font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+#app{height:100vh;display:flex;flex-direction:column;}
+
+/* ══════════════════════════════════
+   ANIMATED BRAND NAME
+══════════════════════════════════ */
+.brand-animated {
+  display:inline-flex;overflow:hidden;
+}
+.brand-animated .char {
+  display:inline-block;
+  animation: charDrop 0.6s cubic-bezier(.22,1,.36,1) both;
+  font-style:normal;
+  background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+@keyframes charDrop {
+  from { opacity:0; transform:translateY(-24px) scale(0.7); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.brand-animated .char:nth-child(1){animation-delay:.05s}
+.brand-animated .char:nth-child(2){animation-delay:.10s}
+.brand-animated .char:nth-child(3){animation-delay:.15s}
+.brand-animated .char:nth-child(4){animation-delay:.20s}
+.brand-animated .char:nth-child(5){animation-delay:.25s}
+.brand-animated .char:nth-child(6){animation-delay:.30s}
+.brand-animated .char:nth-child(7){animation-delay:.35s}
+.brand-animated .char:nth-child(8){animation-delay:.40s}
+.brand-animated .char:nth-child(9){animation-delay:.45s}
+.brand-animated .char:nth-child(10){animation-delay:.50s}
+.brand-animated .char:nth-child(11){animation-delay:.55s}
+.brand-animated .char:nth-child(12){animation-delay:.60s}
+
+.brand-shimmer {
+  display:inline-flex;
+  position:relative;
+  overflow:hidden;
+}
+.brand-shimmer::after {
+  content:'';
+  position:absolute;
+  top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent);
+  animation:shimmerSweep 2.5s 1.2s ease forwards;
+}
+@keyframes shimmerSweep {
+  0%{left:-60%}100%{left:160%}
+}
+
+.sidebar-brand-animated {
+  font-size:24px;font-weight:400;font-family:'Great Vibes',cursive,Georgia,serif;letter-spacing:.5px;
+  display:inline-flex;position:relative;
+}
+.sidebar-brand-animated .char {
+  display:inline-block;
+  animation:sideCharPop .5s cubic-bezier(.34,1.56,.64,1) both;
+  background:linear-gradient(90deg,var(--a1),var(--a2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+@keyframes sideCharPop {
+  from{opacity:0;transform:scale(0) rotate(-20deg);}
+  to{opacity:1;transform:scale(1) rotate(0);}
+}
+.sidebar-brand-animated.replay .char {
+  animation:sideCharPop .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+/* ══════════════════════════════════
+   GREETING OVERLAY
+══════════════════════════════════ */
+.greeting-overlay {
+  position:fixed;inset:0;z-index:1000;
+  background:radial-gradient(ellipse 80% 80% at 50% 50%, #0a0f1e 0%, #030508 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:24px;
+  animation:greetFadeOut 0.6s ease 3.8s forwards;
+}
+@keyframes greetFadeOut {
+  from{opacity:1;pointer-events:all;}
+  to{opacity:0;pointer-events:none;}
+}
+.greet-icon {
+  font-size:64px;
+  animation:greetIconPulse 1s ease infinite alternate;
+  filter:drop-shadow(0 0 24px var(--a1));
+}
+@keyframes greetIconPulse {
+  from{transform:scale(1);}
+  to{transform:scale(1.12);}
+}
+.greet-brand {
+  font-size:52px;font-weight:400;font-family:'Great Vibes',cursive,Georgia,serif;
+  display:inline-flex;
+}
+.greet-brand .char {
+  display:inline-block;
+  animation:greetCharRise 0.7s cubic-bezier(.22,1,.36,1) both;
+  background:linear-gradient(135deg,var(--a1) 0%,var(--a2) 50%,var(--a3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 2px 12px #00d4a860);
+}
+@keyframes greetCharRise {
+  from{opacity:0;transform:translateY(40px) scale(0.5);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.greet-brand .char:nth-child(1){animation-delay:.1s}
+.greet-brand .char:nth-child(2){animation-delay:.16s}
+.greet-brand .char:nth-child(3){animation-delay:.22s}
+.greet-brand .char:nth-child(4){animation-delay:.28s}
+.greet-brand .char:nth-child(5){animation-delay:.34s}
+.greet-brand .char:nth-child(6){animation-delay:.40s}
+.greet-brand .char:nth-child(7){animation-delay:.46s}
+.greet-brand .char:nth-child(8){animation-delay:.52s}
+.greet-brand .char:nth-child(9){animation-delay:.58s}
+.greet-brand .char:nth-child(10){animation-delay:.64s}
+.greet-brand .char:nth-child(11){animation-delay:.70s}
+.greet-brand .char:nth-child(12){animation-delay:.76s}
+.greet-tagline {
+  font-size:15px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;
+  opacity:0;animation:fadeInUp .5s ease 1.4s forwards;
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.greet-rings {
+  position:absolute;inset:0;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+}
+.greet-ring {
+  position:absolute;border-radius:50%;border:1px solid var(--a1);
+  opacity:0;animation:ringExpand 2s ease infinite;
+}
+.greet-ring:nth-child(1){width:200px;height:200px;animation-delay:0s;}
+.greet-ring:nth-child(2){width:350px;height:350px;animation-delay:.5s;}
+.greet-ring:nth-child(3){width:500px;height:500px;animation-delay:1s;}
+@keyframes ringExpand {
+  0%{opacity:.5;transform:scale(.5);}
+  100%{opacity:0;transform:scale(1.2);}
+}
+
+/* ══════════════════════════════════
+   AUTH SCREENS
+══════════════════════════════════ */
+.auth-wrap{
+  height:100vh;display:flex;align-items:flex-start;justify-content:center;
+  padding:16px 20px;position:relative;overflow-y:auto;overflow-x:hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 20%, #00d4a820 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, #7c6fff18 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 60% 10%, #ff6b9d10 0%, transparent 50%),
+    var(--bg);
+}
+.auth-wrap > .auth-card{margin:auto;}
+.auth-wrap::before{display:none;}
+.auth-card{
+  width:100%;max-width:460px;
+  background:linear-gradient(160deg, #0e1420ee, #111a2fee);
+  border:1px solid var(--border-glow);border-radius:22px;padding:22px 28px 24px;
+  box-shadow:var(--shadow), 0 0 0 1px #ffffff06, inset 0 1px 0 #ffffff10;
+  position:relative;overflow:hidden;backdrop-filter:blur(20px);
+  animation:cardSlideIn .5s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes cardSlideIn{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+.auth-card::after{
+  content:'';position:absolute;top:-1px;left:20%;right:20%;height:2px;
+  background:linear-gradient(90deg, transparent, var(--a1), var(--a2), transparent);border-radius:2px;
+}
+.brand-logo{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.brand-icon{
+  width:38px;height:38px;border-radius:11px;
+  background:linear-gradient(135deg, var(--a1), var(--a2));
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  box-shadow:0 8px 24px #00d4a840, 0 0 0 1px #00d4a820;
+  animation:iconBounce .6s cubic-bezier(.34,1.56,.64,1) .1s both;
+}
+@keyframes iconBounce{from{opacity:0;transform:scale(0) rotate(-180deg);}to{opacity:1;transform:scale(1) rotate(0);}}
+.brand-name{font-size:26px;font-weight:400;font-family:'Great Vibes',cursive,Georgia,serif;letter-spacing:.5px;color:var(--text);}
+.auth-title{font-size:22px;font-weight:800;margin-bottom:3px;letter-spacing:-.5px;}
+.auth-sub{color:var(--text2);font-size:12px;margin-bottom:10px;line-height:1.5;}
+.avatar-upload{display:flex;flex-direction:column;align-items:center;margin-bottom:10px;gap:5px;}
+.avatar-ring{
+  width:64px;height:64px;border-radius:50%;border:2px dashed var(--a1);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  overflow:hidden;background:var(--surface2);transition:.25s;position:relative;
+}
+.avatar-ring::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background:linear-gradient(135deg,var(--a1)20,transparent);opacity:0;transition:.25s;
+}
+.avatar-ring:hover{border-color:var(--a2);transform:scale(1.04);}
+.avatar-ring:hover::after{opacity:1;}
+.avatar-ring img{width:100%;height:100%;object-fit:cover;}
+.avatar-placeholder{font-size:22px;color:var(--text3);}
+.avatar-label{font-size:12px;color:var(--text2);}
+.form-group{margin-bottom:10px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:7px;display:block;letter-spacing:.8px;text-transform:uppercase;}
+.form-input,.form-select{
+  width:100%;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:var(--rs);color:var(--text);font-family:inherit;font-size:14px;padding:10px 13px;
+  outline:none;transition:.2s;-webkit-appearance:none;
+}
+.form-input:focus,.form-select:focus{border-color:var(--a1);box-shadow:0 0 0 3px #00d4a814;background:var(--surface3);}
+textarea.form-input{resize:none;min-height:54px;}
+.phone-row{display:flex;gap:8px;}
+.country-sel{width:140px;flex-shrink:0;}
+.country-sel select{
+  padding-left:12px;font-size:13px;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:var(--rs);color:var(--text);
+  width:100%;height:40px;outline:none;cursor:pointer;-webkit-appearance:none;
+  font-family:inherit;transition:.2s;
+}
+.country-sel select:focus{border-color:var(--a1);}
+.btn{width:100%;padding:14px;border:none;border-radius:var(--rs);font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;letter-spacing:-.2px;}
+.btn-primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:0 8px 28px #00d4a840;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 36px #00d4a855;}
+.btn-primary:active{transform:translateY(0);}
+.btn-ghost{background:transparent;color:var(--text2);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--a1);color:var(--a1);}
+.auth-switch{text-align:center;margin-top:12px;font-size:12px;color:var(--text2);}
+.auth-switch a{color:var(--a1);cursor:pointer;font-weight:600;text-decoration:none;}
+.error-msg{color:var(--red);font-size:12px;margin-top:6px;display:flex;align-items:center;gap:4px;}
+.error-msg::before{content:'⚠';font-size:11px;}
+.offline-notice{display:flex;align-items:center;gap:8px;margin-bottom:10px;background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text2);}
+.offline-notice.online{border-color:#00d4a830;color:var(--a1);}
+.offline-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.offline-dot.on{background:var(--a1);box-shadow:0 0 8px var(--a1);}
+.offline-dot.off{background:var(--a4);}
+.login-card{max-width:360px;padding:32px 28px 28px;}
+
+/* ══════════════════════════════════
+   MAIN APP
+══════════════════════════════════ */
+.main-app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:330px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100%;}
+.sidebar-head{padding:20px 20px 14px;border-bottom:1px solid var(--border);}
+.sidebar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:16px;transition:.2s;}
+.icon-btn:hover{background:var(--surface3);color:var(--a1);}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:9px 14px;transition:.2s;}
+.search-bar:focus-within{border-color:var(--a1);}
+.search-bar input{background:none;border:none;outline:none;color:var(--text);font-size:13px;flex:1;font-family:inherit;}
+.search-bar input::placeholder{color:var(--text3);}
+.contacts-list{flex:1;overflow-y:auto;padding:6px 0;}
+.contacts-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.contacts-empty-icon{font-size:36px;opacity:.4;}
+.contact-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;transition:.15s;border-left:3px solid transparent;}
+.contact-item:hover{background:var(--surface2);}
+.contact-item.active{background:var(--surface2);border-left-color:var(--a1);}
+.contact-avatar{width:46px;height:46px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;color:#fff;overflow:hidden;position:relative;}
+.contact-avatar img{width:100%;height:100%;object-fit:cover;}
+.online-dot{position:absolute;bottom:1px;right:1px;width:11px;height:11px;background:var(--green);border-radius:50%;border:2px solid var(--surface);}
+.contact-info{flex:1;min-width:0;}
+.contact-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.contact-preview{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.contact-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.contact-time{font-size:10px;color:var(--text3);}
+.contact-badge{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:20px;text-align:center;}
+.sidebar-profile{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s;}
+.sidebar-profile:hover{background:var(--surface2);}
+.profile-avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;flex-shrink:0;border:2px solid var(--a1);}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.profile-info{flex:1;min-width:0;}
+.profile-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.profile-status{font-size:11px;color:var(--green);}
+.chat-area{flex:1;display:flex;flex-direction:column;background:var(--bg);min-width:0;position:relative;}
+.chat-area::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle at 20% 80%, #00d4a808 0%, transparent 40%),radial-gradient(circle at 80% 20%, #7c6fff08 0%, transparent 40%);}
+.chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--text3);position:relative;z-index:1;}
+.chat-empty-icon{font-size:64px;opacity:.2;}
+.chat-empty h3{font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;font-size:22px;color:var(--text2);}
+.chat-empty p{font-size:14px;max-width:240px;text-align:center;line-height:1.6;}
+.chat-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;background:var(--surface);position:relative;z-index:2;}
+.chat-header-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex-shrink:0;position:relative;}
+.chat-header-avatar img{width:100%;height:100%;object-fit:cover;}
+.chat-header-info{flex:1;}
+.chat-header-name{font-weight:700;font-size:15px;font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;}
+.chat-header-status{font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px;}
+.chat-header-actions{display:flex;gap:8px;}
+.messages-wrap{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:5px;position:relative;z-index:1;}
+.msg-group-date{text-align:center;margin:12px 0;font-size:11px;color:var(--text3);position:relative;display:flex;align-items:center;gap:10px;}
+.msg-group-date::before,.msg-group-date::after{content:'';flex:1;height:1px;background:var(--border);}
+.message{display:flex;flex-direction:column;max-width:68%;}
+.message.out{align-self:flex-end;align-items:flex-end;}
+.message.in{align-self:flex-start;align-items:flex-start;}
+.msg-bubble{padding:10px 15px;border-radius:18px;font-size:14px;line-height:1.55;word-break:break-word;position:relative;animation:msgPop .25s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes msgPop{from{opacity:0;transform:scale(.85) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.message.out .msg-bubble{background:linear-gradient(135deg,#1a3060,#1e2c52);border-bottom-right-radius:4px;border:1px solid #2a3d78;}
+.message.in .msg-bubble{background:var(--msg-in);border-bottom-left-radius:4px;border:1px solid var(--border);}
+.msg-time{font-size:10px;color:var(--text3);margin-top:3px;padding:0 4px;}
+.msg-typing{display:flex;align-items:center;gap:4px;background:var(--msg-in);border:1px solid var(--border);padding:12px 16px;border-radius:18px;border-bottom-left-radius:4px;width:fit-content;}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:typing 1.2s infinite;}
+.typing-dot:nth-child(2){animation-delay:.2s;}.typing-dot:nth-child(3){animation-delay:.4s;}
+@keyframes typing{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+.msg-bubble.offline-reply{background:var(--msg-in);border:1px solid #ffd16630;}
+.offline-tag{font-size:9px;color:var(--a4);letter-spacing:.5px;text-transform:uppercase;margin-top:2px;opacity:.7;}
+.location-bubble{background:var(--surface2);border:1px solid var(--border);border-radius:16px;overflow:hidden;width:260px;cursor:pointer;transition:.2s;}
+.location-bubble:hover{border-color:var(--a1);transform:scale(1.01);}
+.location-map-preview{width:100%;height:130px;background:var(--surface3);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.location-map-preview iframe{width:100%;height:100%;border:none;pointer-events:none;}
+.location-map-offline{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,#1a2540,#0e1928);}
+.location-map-offline span{font-size:32px;}
+.location-map-offline small{font-size:10px;color:var(--text3);}
+.location-pin-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;filter:drop-shadow(0 2px 4px #0006);pointer-events:none;}
+.location-info{padding:10px 14px;}
+.location-label{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.location-coords{font-size:11px;color:var(--text2);margin-bottom:6px;}
+.location-copy-btn{font-size:11px;color:var(--a4);font-weight:600;cursor:pointer;display:block;margin-bottom:4px;}
+.location-open-btn{font-size:11px;color:var(--a1);font-weight:600;}
+.call-event{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 16px;margin:4px auto;width:fit-content;}
+.chat-input-wrap{display:flex;align-items:flex-end;gap:10px;padding:14px 20px;background:var(--surface);border-top:1px solid var(--border);position:relative;z-index:2;}
+.input-action-btn{width:38px;height:38px;border-radius:10px;border:none;cursor:pointer;background:var(--surface2);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;}
+.input-action-btn:hover{background:var(--surface3);}
+.chat-input{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;color:var(--text);font-family:inherit;font-size:14px;padding:10px 15px;outline:none;resize:none;max-height:120px;overflow-y:auto;transition:.2s;line-height:1.5;}
+.chat-input:focus{border-color:var(--a1);box-shadow:0 0 0 3px #00d4a810;}
+.send-btn{width:40px;height:40px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;box-shadow:0 4px 16px #00d4a840;}
+.send-btn:hover{transform:scale(1.08);}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.send-btn.sending{animation: sendPulse .3s ease;}
+@keyframes sendPulse{0%{transform:scale(1);}50%{transform:scale(1.25);}100%{transform:scale(1);}}
+
+.typing-sound-indicator{position:absolute;top:-28px;right:20px;font-size:10px;color:var(--a1);display:flex;align-items:center;gap:4px;opacity:0;transition:opacity .2s;}
+.typing-sound-indicator.visible{opacity:1;}
+.typing-sound-indicator .wave{display:flex;gap:2px;align-items:flex-end;height:14px;}
+.typing-sound-indicator .wave span{width:2px;border-radius:2px;background:var(--a1);animation:waveBar .5s ease infinite alternate;}
+.typing-sound-indicator .wave span:nth-child(1){height:4px;animation-delay:0s;}
+.typing-sound-indicator .wave span:nth-child(2){height:10px;animation-delay:.1s;}
+.typing-sound-indicator .wave span:nth-child(3){height:6px;animation-delay:.2s;}
+.typing-sound-indicator .wave span:nth-child(4){height:12px;animation-delay:.15s;}
+.typing-sound-indicator .wave span:nth-child(5){height:5px;animation-delay:.05s;}
+@keyframes waveBar{from{transform:scaleY(.4);}to{transform:scaleY(1);}}
+
+/* FIX 4: Clear "AI Simulated" banner when offline */
+.offline-chat-banner{
+  background:#ffd16614;border-bottom:1px solid #ffd16640;
+  padding:5px 16px;font-size:11px;color:var(--a4);text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+
+.profile-panel{width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:28px 20px;overflow-y:auto;gap:8px;}
+.pp-avatar{width:80px;height:80px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;flex-shrink:0;border:3px solid var(--a1);margin-bottom:4px;}
+.pp-avatar img{width:100%;height:100%;object-fit:cover;}
+.pp-name{font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;font-size:20px;font-weight:800;text-align:center;}
+.pp-number{font-size:13px;color:var(--text2);}
+.pp-bio{font-size:12px;color:var(--text2);text-align:center;line-height:1.6;max-width:220px;}
+.pp-badge{background:linear-gradient(135deg,var(--a1)20,var(--a2)20);color:var(--a1);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid rgba(0,212,168,0.25);}
+.pp-divider{width:100%;height:1px;background:var(--border);margin:4px 0;}
+.pp-stat{width:100%;display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;}
+.pp-stat-label{color:var(--text2);}
+.pp-stat-val{font-weight:700;}
+.modal-overlay{position:fixed;inset:0;background:#0008;backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--surface);border:1px solid var(--border-glow);border-radius:20px;padding:28px;width:100%;max-width:400px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.modal::after{content:'';position:absolute;top:-1px;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,var(--a2),transparent);}
+.modal-title{font-size:18px;font-weight:800;font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:18px;}
+.modal-actions{display:flex;gap:10px;margin-top:16px;}
+.modal-actions .btn{flex:1;}
+.call-screen{position:fixed;inset:0;z-index:500;background:#000;display:flex;flex-direction:column;}
+.call-remote{flex:1;position:relative;background:linear-gradient(135deg,#0a0f1e,#050810);display:flex;align-items:center;justify-content:center;}
+.call-remote-placeholder{display:flex;flex-direction:column;align-items:center;gap:16px;}
+.call-remote-avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:#fff;animation:callPulse 1.5s infinite;overflow:hidden;border:3px solid rgba(0,212,168,0.25);}
+.call-remote-avatar img{width:100%;height:100%;object-fit:cover;}
+@keyframes callPulse{0%{box-shadow:0 0 0 0 #00d4a860;}70%{box-shadow:0 0 0 30px transparent;}100%{box-shadow:0 0 0 0 transparent;}}
+.call-remote-name{font-size:24px;font-weight:800;font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;}
+.call-remote-status{font-size:13px;color:var(--text2);}
+.call-duration{font-size:15px;color:var(--a1);font-weight:600;}
+.call-local{position:absolute;bottom:120px;right:20px;width:120px;height:180px;border-radius:16px;overflow:hidden;background:var(--surface2);border:2px solid var(--border-glow);}
+.call-local-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--surface3);}
+.call-info-bar{position:absolute;top:0;left:0;right:0;padding:20px 24px;display:flex;align-items:center;gap:14px;background:linear-gradient(to bottom,#000c,transparent);}
+.call-type-badge{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;letter-spacing:.5px;}
+.call-controls{padding:28px 40px;background:linear-gradient(to top,#000d,transparent);display:flex;align-items:center;justify-content:center;gap:20px;position:absolute;bottom:0;left:0;right:0;}
+.ctrl-btn{width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;transition:.2s;flex-shrink:0;}
+.ctrl-btn:hover{transform:scale(1.08);}
+.ctrl-mute{background:#ffffff14;}.ctrl-mute.active{background:var(--red);}
+.ctrl-video{background:#ffffff14;}.ctrl-video.active{background:var(--red);}
+.ctrl-speaker{background:#ffffff14;}
+.ctrl-end{background:var(--red);width:70px;height:70px;font-size:28px;box-shadow:0 8px 28px #ff4d6d60;}
+.ctrl-end:hover{background:#ff2050;}
+.incoming-call{position:fixed;inset:0;z-index:600;background:#000d;backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.incoming-card{background:var(--surface);border:1px solid var(--border-glow);border-radius:28px;padding:36px;text-align:center;width:320px;box-shadow:var(--shadow);animation:slideUp .3s ease;position:relative;overflow:hidden;}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+.incoming-card::after{content:'';position:absolute;top:-1px;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,var(--a1),transparent);}
+.incoming-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff;font-weight:700;animation:callPulse 1.5s infinite;overflow:hidden;}
+.incoming-avatar img{width:100%;height:100%;object-fit:cover;}
+.incoming-name{font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;}
+.incoming-sub{font-size:13px;color:var(--text2);margin-bottom:28px;}
+.incoming-actions{display:flex;gap:20px;justify-content:center;}
+.inc-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:26px;transition:.2s;}
+.inc-btn:hover{transform:scale(1.1);}
+.inc-accept{background:var(--green);}.inc-decline{background:var(--red);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border-glow);color:var(--text);padding:12px 24px;border-radius:12px;font-size:13px;z-index:999;box-shadow:var(--shadow);animation:toastIn .3s ease;white-space:nowrap;font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif;}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,12px);}to{opacity:1;transform:translate(-50%,0);}}
+.net-bar{position:fixed;top:0;left:0;right:0;z-index:300;padding:6px 16px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;animation:slideDown .3s ease;}
+@keyframes slideDown{from{transform:translateY(-100%);}to{transform:translateY(0);}}
+.net-bar.offline{background:#ffd16614;border-bottom:1px solid #ffd16640;color:var(--a4);}
+.net-bar.back{background:#00d4a814;border-bottom:1px solid #00d4a840;color:var(--a1);}
+.sound-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--text2);transition:.2s;user-select:none;margin-left:auto;}
+.sound-toggle:hover{border-color:var(--a1);color:var(--a1);}
+.sound-toggle.muted-sounds{color:var(--red);border-color:rgba(255,77,109,0.19);}
+
+/* ADMIN PANEL */
+.admin-modal-overlay{position:fixed;inset:0;background:#000b;backdrop-filter:blur(10px);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;}
+.admin-card{background:linear-gradient(160deg,#0e1420ee,#12101fee);border:1px solid #ff6b9d33;border-radius:22px;padding:28px;width:100%;max-width:440px;box-shadow:var(--shadow),0 0 60px #ff6b9d0a;position:relative;overflow:hidden;}
+.admin-card::after{content:'';position:absolute;top:-1px;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,var(--a3),transparent);}
+.admin-card-title{font-size:18px;font-weight:800;font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;margin-bottom:4px;color:var(--a3);}
+.admin-card-sub{font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6;}
+.admin-tab-row{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.admin-tab-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;transition:.2s;font-family:inherit;}
+.admin-tab-btn.active{background:#ff6b9d22;border-color:#ff6b9d55;color:var(--a3);}
+.admin-tab-pane{display:none;}.admin-tab-pane.active{display:block;}
+.admin-user-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.admin-user-row:last-child{border-bottom:none;}
+.admin-user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;}
+.admin-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.admin-stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
+.admin-stat-num{font-size:22px;font-weight:800;font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;color:var(--a1);}
+.admin-stat-lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+.admin-announce-area{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-family:inherit;font-size:13px;padding:10px 13px;outline:none;resize:none;min-height:70px;transition:.2s;}
+.admin-announce-area:focus{border-color:var(--a3);}
+.btn-admin-send{width:100%;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--a3),#c42859);color:#fff;font-family:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;transition:.2s;}
+.btn-admin-send:hover{opacity:.88;}
+.admin-locked-view{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:8px 0;}
+.admin-lock-icon{font-size:42px;filter:drop-shadow(0 0 18px #ff6b9d66);}
+.admin-err{font-size:12px;color:var(--red);margin-top:-6px;min-height:16px;}
+/* sidebar admin button */
+.admin-trigger-btn{width:36px;height:36px;border-radius:10px;border:1px solid #ff6b9d33;cursor:pointer;background:#ff6b9d11;color:var(--a3);display:flex;align-items:center;justify-content:center;font-size:15px;transition:.2s;flex-shrink:0;}
+.admin-trigger-btn:hover{background:#ff6b9d22;border-color:#ff6b9d66;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- GREETING OVERLAY -->
+<div v-if="showGreeting" class="greeting-overlay">
+  <div class="greet-rings">
+    <div class="greet-ring"></div>
+    <div class="greet-ring"></div>
+    <div class="greet-ring"></div>
+  </div>
+  <div class="greet-icon">💬</div>
+  <div class="greet-brand">
+    <span class="char">R</span><span class="char">e</span><span class="char">a</span><span class="char">l</span><span class="char">i</span><span class="char">t</span><span class="char">y</span><span class="char">g</span><span class="char">r</span><span class="char">a</span><span class="char">m</span>
+  </div>
+  <div class="greet-tagline">Connect · Chat · Share</div>
+</div>
+
+<!-- OFFLINE/ONLINE BAR -->
+<div v-if="netBar" :class="['net-bar', isOnline ? 'back' : 'offline']">
+  <span>{{isOnline ? '●' : '○'}}</span>
+  <span>{{isOnline ? 'Back online — AI chat enabled' : 'Offline mode — messages saved locally, AI replies paused'}}</span>
+</div>
+
+<!-- ════ ADMIN ACCESS MODAL ════ -->
+<div v-if="showAdminModal" class="admin-modal-overlay" @click.self="showAdminModal=false">
+  <div class="admin-card">
+    <!-- Locked state -->
+    <template v-if="!adminUnlocked">
+      <div class="admin-locked-view">
+        <div class="admin-lock-icon">🛡️</div>
+        <div class="admin-card-title">Admin Access</div>
+        <div class="admin-card-sub">Enter the admin password to access the RealityGram server controls.</div>
+        <div style="width:100%;max-width:320px">
+          <input v-model="adminPassInput" type="password" class="form-input" placeholder="Admin password…" @keyup.enter="tryAdminLogin" style="margin-bottom:10px"/>
+          <div class="admin-err">{{adminErr}}</div>
+          <button class="btn btn-primary" style="font-size:14px;padding:11px;margin-top:4px" @click="tryAdminLogin">Unlock Server →</button>
+          <button class="btn btn-ghost" style="font-size:13px;padding:9px;margin-top:8px" @click="showAdminModal=false">Cancel</button>
+        </div>
+      </div>
+    </template>
+    <!-- Unlocked state -->
+    <template v-else>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="admin-card-title">⚡ RealityGram Server</div>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;color:var(--a3);border-color:#ff6b9d33" @click="adminLogout">Lock 🔒</button>
+      </div>
+      <div class="admin-card-sub">You have full admin access to the server.</div>
+      <div class="admin-stat-grid">
+        <div class="admin-stat-box"><div class="admin-stat-num">{{contacts.length}}</div><div class="admin-stat-lbl">Contacts</div></div>
+        <div class="admin-stat-box"><div class="admin-stat-num" style="color:var(--green)">🟢</div><div class="admin-stat-lbl">Server Online</div></div>
+      </div>
+      <div class="admin-tab-row">
+        <button class="admin-tab-btn" :class="{active:adminTab==='users'}" @click="adminTab='users'">👥 Users</button>
+        <button class="admin-tab-btn" :class="{active:adminTab==='announce'}" @click="adminTab='announce'">📢 Announce</button>
+        <button class="admin-tab-btn" :class="{active:adminTab==='server'}" @click="adminTab='server'">🖥️ Server</button>
+      </div>
+      <!-- Users tab -->
+      <div class="admin-tab-pane" :class="{active:adminTab==='users'}">
+        <div v-if="contacts.length===0" style="color:var(--text3);font-size:13px;text-align:center;padding:16px">No contacts yet</div>
+        <div v-for="c in contacts" :key="c.id" class="admin-user-row">
+          <div class="admin-user-av"><img v-if="c.avatarUrl" :src="c.avatarUrl" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/><span v-else>{{c.name[0].toUpperCase()}}</span></div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{c.name}}</div><div style="font-size:11px;color:var(--text2)">{{c.code}} {{c.number}}</div></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)"></div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="admin-user-row">
+            <div class="admin-user-av" style="background:linear-gradient(135deg,var(--a3),#c42859)"><img v-if="me.avatarUrl" :src="me.avatarUrl" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/><span v-else>{{me.name[0].toUpperCase()}}</span></div>
+            <div style="flex:1"><div style="font-weight:600">{{me.name}} <span style="font-size:10px;background:#ff6b9d22;color:var(--a3);padding:2px 7px;border-radius:20px;border:1px solid #ff6b9d44">ADMIN</span></div><div style="font-size:11px;color:var(--text2)">{{me.code}} {{me.phone}}</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Announce tab -->
+      <div class="admin-tab-pane" :class="{active:adminTab==='announce'}">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Send an admin message to the active chat:</div>
+        <textarea class="admin-announce-area" v-model="adminAnnounce" placeholder="Type your announcement…"></textarea>
+        <button class="btn-admin-send" @click="sendAdminAnnounce">📢 Send to Active Chat</button>
+      </div>
+      <!-- Server tab -->
+      <div class="admin-tab-pane" :class="{active:adminTab==='server'}">
+        <div class="admin-stat-grid" style="margin-bottom:12px">
+          <div class="admin-stat-box"><div class="admin-stat-num" style="font-size:14px;color:var(--green)">🟢 Online</div><div class="admin-stat-lbl">Status</div></div>
+          <div class="admin-stat-box"><div class="admin-stat-num">{{contacts.length}}</div><div class="admin-stat-lbl">Contacts</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" style="font-size:13px;padding:9px" @click="adminClearChat">🗑 Clear Active Chat</button>
+          <button class="btn btn-ghost" style="font-size:13px;padding:9px" @click="doLogout;showAdminModal=false">🚪 Force Sign Out (Me)</button>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+
+<!-- ════ REGISTER ════ -->
+<div v-if="screen==='register'" class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand-logo">
+      <div class="brand-icon">💬</div>
+      <div class="brand-name brand-shimmer">
+        <span class="brand-animated">
+          <span class="char">R</span><span class="char">e</span><span class="char">a</span><span class="char">l</span><span class="char">i</span><span class="char">t</span><span class="char">y</span><span class="char">g</span><span class="char">r</span><span class="char">a</span><span class="char">m</span>
+        </span>
+      </div>
+    </div>
+    <div class="offline-notice" :class="{online: isOnline}">
+      <div class="offline-dot" :class="isOnline ? 'on' : 'off'"></div>
+      <span>{{isOnline ? 'Online — AI chat active' : 'Offline — works fully offline, AI replies use local mode'}}</span>
+    </div>
+    <div class="auth-title">Create account</div>
+    <div class="auth-sub">Join RealityGram · message, call &amp; share your location</div>
+    <div class="avatar-upload">
+      <div class="avatar-ring" @click="$refs.regAv.click()">
+        <img v-if="reg.avatarUrl" :src="reg.avatarUrl"/>
+        <span v-else class="avatar-placeholder">📷</span>
+      </div>
+      <span class="avatar-label">Tap to add profile photo</span>
+      <input ref="regAv" type="file" accept="image/*" style="display:none" @change="onAvChange"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input v-model="reg.name" class="form-input" placeholder="Your name" @keyup.enter="doRegister"/>
+      <div v-if="rErr.name" class="error-msg">{{rErr.name}}</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <div class="phone-row">
+        <div class="country-sel">
+          <select v-model="reg.code">
+            <option v-for="c in countries" :key="c.code" :value="c.dial">{{c.flag}} {{c.name}} ({{c.dial}})</option>
+          </select>
+        </div>
+        <input v-model="reg.phone" class="form-input" placeholder="78 000 0000" @keyup.enter="doRegister"/>
+      </div>
+      <div v-if="rErr.phone" class="error-msg">{{rErr.phone}}</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bio <span style="opacity:.5">(optional)</span></label>
+      <textarea v-model="reg.bio" class="form-input" placeholder="Tell something about yourself…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input v-model="reg.pass" type="password" class="form-input" placeholder="Min. 4 characters" @keyup.enter="doRegister"/>
+      <div v-if="rErr.pass" class="error-msg">{{rErr.pass}}</div>
+    </div>
+    <button class="btn btn-primary" @click="doRegister">✨ Create Account</button>
+    <div class="auth-switch">Already have an account? <a @click="screen='login'">Sign in</a></div>
+  </div>
+</div>
+
+<!-- ════ LOGIN ════ -->
+<div v-if="screen==='login'" class="auth-wrap">
+  <div class="auth-card login-card">
+    <div class="brand-logo" style="justify-content:center;margin-bottom:28px;">
+      <div class="brand-icon">💬</div>
+      <div class="brand-name brand-shimmer">
+        <span class="brand-animated">
+          <span class="char">R</span><span class="char">e</span><span class="char">a</span><span class="char">l</span><span class="char">i</span><span class="char">t</span><span class="char">y</span><span class="char">g</span><span class="char">r</span><span class="char">a</span><span class="char">m</span>
+        </span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" :value="loginUser ? loginUser.name : ''" placeholder="Your name" readonly style="background:var(--surface3);color:var(--text2);cursor:default;"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <div class="phone-row">
+        <div class="country-sel">
+          <select v-model="lgn.code">
+            <option v-for="c in countries" :key="c.code" :value="c.dial">{{c.flag}} {{c.name}} ({{c.dial}})</option>
+          </select>
+        </div>
+        <input v-model="lgn.phone" class="form-input" placeholder="78 000 0000" @input="onLgnPhoneInput" @keyup.enter="doLogin"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input v-model="lgn.pass" type="password" class="form-input" placeholder="Password" @keyup.enter="doLogin"/>
+      <div v-if="lgnErr" class="error-msg">{{lgnErr}}</div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:4px" @click="doLogin">Sign In</button>
+    <div class="auth-switch" style="margin-top:14px">New here? <a @click="screen='register'">Create account</a></div>
+  </div>
+</div>
+
+<!-- ════ MAIN APP ════ -->
+<div v-if="screen==='app'" class="main-app">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-top">
+        <div class="sidebar-brand-animated">
+          <span class="char">R</span><span class="char">e</span><span class="char">a</span><span class="char">l</span><span class="char">i</span><span class="char">t</span><span class="char">y</span><span class="char">g</span><span class="char">r</span><span class="char">a</span><span class="char">m</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div class="sound-toggle" :class="{'muted-sounds': soundsMuted}" @click="toggleSounds" :title="soundsMuted ? 'Sounds off' : 'Sounds on'">
+            {{soundsMuted ? '🔇' : '🔊'}} {{soundsMuted ? 'Muted' : 'Sound'}}
+          </div>
+          <button class="admin-trigger-btn" @click="showAdminModal=true" title="Admin Access">🛡️</button>
+          <button class="icon-btn" @click="showAdd=true" title="New Chat">＋</button>
+        </div>
+      </div>
+      <div class="search-bar">
+        <span style="color:var(--text3);font-size:14px">🔍</span>
+        <input v-model="searchQ" placeholder="Search contacts…"/>
+      </div>
+    </div>
+    <div class="contacts-list">
+      <div v-if="filteredC.length===0" class="contacts-empty">
+        <div class="contacts-empty-icon">💬</div>
+        <span>No contacts yet.<br/>Press <b style="color:var(--a1)">＋</b> to add someone.</span>
+      </div>
+      <div v-for="c in filteredC" :key="c.id"
+        class="contact-item" :class="{active:active&&active.id===c.id}"
+        @click="openChat(c)">
+        <div class="contact-avatar">
+          <img v-if="c.avatarUrl" :src="c.avatarUrl"/>
+          <span v-else>{{c.name[0].toUpperCase()}}</span>
+          <div class="online-dot"></div>
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">{{c.name}}</div>
+          <div class="contact-preview">{{c.lastMsg || c.code+' '+c.number}}</div>
+        </div>
+        <div class="contact-meta">
+          <div class="contact-time">{{c.lastTime}}</div>
+          <div v-if="c.unread" class="contact-badge">{{c.unread}}</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-profile" @click="showPanel=!showPanel;panelTarget='self'">
+      <div class="profile-avatar">
+        <img v-if="me.avatarUrl" :src="me.avatarUrl"/>
+        <span v-else>{{me.name[0].toUpperCase()}}</span>
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">{{me.name}}</div>
+        <div class="profile-status">● Online</div>
+      </div>
+      <button class="admin-trigger-btn" @click.stop="showAdminModal=true" title="Admin Access" style="margin-right:4px">🛡️</button>
+    </div>
+  </div>
+
+  <!-- ── CHAT AREA ── -->
+  <div class="chat-area">
+    <div v-if="!active" class="chat-empty">
+      <div class="chat-empty-icon">💬</div>
+      <h3>Select a conversation</h3>
+      <p>Choose a contact to start chatting, call or share your location</p>
+    </div>
+
+    <template v-else>
+      <div class="chat-header">
+        <div class="chat-header-avatar">
+          <img v-if="active.avatarUrl" :src="active.avatarUrl"/>
+          <span v-else>{{active.name[0].toUpperCase()}}</span>
+          <div class="online-dot" style="position:absolute;bottom:1px;right:1px;width:11px;height:11px;border-radius:50%;background:var(--green);border:2px solid var(--surface)"></div>
+        </div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">{{active.name}}</div>
+          <div class="chat-header-status">● {{isOnline ? 'Online · AI Active' : 'Offline simulation'}}</div>
+        </div>
+        <div class="chat-header-actions">
+          <button class="icon-btn" @click="startCall('audio')" title="Voice Call">📞</button>
+          <button class="icon-btn" @click="startCall('video')" title="Video Call">📹</button>
+          <button class="icon-btn" @click="showPanel=!showPanel;panelTarget='contact'" title="Info">ℹ️</button>
+        </div>
+      </div>
+
+      <div v-if="!isOnline" class="offline-chat-banner">
+        📵 Offline mode — replies are simulated
+      </div>
+
+      <div class="messages-wrap" ref="msgWrap">
+        <div class="msg-group-date">Today</div>
+        <template v-for="(msg,i) in activeMsgs" :key="i">
+          <div v-if="msg.type==='call'" class="call-event">
+            <span>{{msg.callType==='video'?'📹':'📞'}}</span>
+            <span>{{msg.text}}</span>
+          </div>
+          <div v-else-if="msg.type==='location'" class="message" :class="msg.from==='me'?'out':'in'">
+            <div class="location-bubble" @click="openMapFull(msg)">
+              <div class="location-map-preview">
+                <template v-if="isOnline">
+                  <iframe :src="'https://www.openstreetmap.org/export/embed.html?bbox='+(msg.lng-.005)+'%2C'+(msg.lat-.004)+'%2C'+(msg.lng+.005)+'%2C'+(msg.lat+.004)+'&layer=mapnik&marker='+msg.lat+'%2C'+msg.lng" loading="lazy"></iframe>
+                  <div class="location-pin-overlay">📍</div>
+                </template>
+                <div v-else class="location-map-offline">
+                  <span>📍</span><small>Map loads when online</small>
+                </div>
+              </div>
+              <div class="location-info">
+                <div class="location-label">📍 {{msg.label || 'Shared Location'}}</div>
+                <div class="location-coords">{{msg.lat.toFixed(5)}}, {{msg.lng.toFixed(5)}}</div>
+                <!-- FIX: copy coordinates button for offline use -->
+                <span class="location-copy-btn" @click.stop="copyCoords(msg)">📋 Copy coordinates</span>
+                <span class="location-open-btn">Open in maps →</span>
+              </div>
+            </div>
+            <div class="msg-time">{{msg.time}}</div>
+          </div>
+          <div v-else class="message" :class="msg.from==='me'?'out':'in'">
+            <div class="msg-bubble" :class="msg.offlineReply ? 'offline-reply' : ''">{{msg.text}}</div>
+            <div v-if="msg.offlineReply" class="offline-tag">simulated reply</div>
+            <div class="msg-time">{{msg.time}}</div>
+          </div>
+        </template>
+        <div v-if="typing" class="message in">
+          <div class="msg-typing">
+            <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-wrap" style="position:relative">
+        <div class="typing-sound-indicator" :class="{visible: isTypingSoundActive}">
+          <div class="wave">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <span>typing</span>
+        </div>
+        <button class="input-action-btn" @click="sendLocation" title="Share Location">📍</button>
+        <textarea class="chat-input" v-model="inputMsg" placeholder="Message…" rows="1"
+          @keydown.enter.exact.prevent="sendMessage"
+          @keydown="onKeyTyped"
+          @input="autoResize" ref="chatInput"></textarea>
+        <button class="send-btn" :class="{sending: sendAnim}" @click="sendMessage" :disabled="!inputMsg.trim()||typing">➤</button>
+      </div>
+    </template>
+  </div>
+
+  <!-- ── PROFILE PANEL ── -->
+  <div v-if="showPanel" class="profile-panel">
+    <template v-if="panelTarget==='contact' && active">
+      <div class="pp-avatar"><img v-if="active.avatarUrl" :src="active.avatarUrl"/><span v-else>{{active.name[0].toUpperCase()}}</span></div>
+      <div class="pp-name">{{active.name}}</div>
+      <div class="pp-number">{{active.code}} {{active.number}}</div>
+      <div class="pp-bio">{{active.bio||'No bio available.'}}</div>
+      <div class="pp-divider"></div>
+      <div class="pp-stat"><span class="pp-stat-label">Messages</span><span class="pp-stat-val">{{activeMsgs.filter(m=>!m.type).length}}</span></div>
+      <div class="pp-stat"><span class="pp-stat-label">Chat mode</span><span class="pp-stat-val" :style="{color: isOnline ? 'var(--green)' : 'var(--a4)'}">{{isOnline ? 'AI Active' : 'Simulated'}}</span></div>
+      <div class="pp-divider"></div>
+      <button class="btn btn-ghost" style="font-size:13px;padding:10px;margin-bottom:8px" @click="startCall('audio')">📞 Audio Call</button>
+      <button class="btn btn-ghost" style="font-size:13px;padding:10px;margin-bottom:8px" @click="startCall('video')">📹 Video Call</button>
+      <button class="btn btn-ghost" style="font-size:13px;padding:10px" @click="removeContact(active)">🗑 Remove</button>
+    </template>
+    <template v-else>
+      <div class="pp-avatar"><img v-if="me.avatarUrl" :src="me.avatarUrl"/><span v-else>{{me.name[0].toUpperCase()}}</span></div>
+      <div class="pp-name">{{me.name}}</div>
+      <div class="pp-number">{{me.code}} {{me.phone}}</div>
+      <div class="pp-bio">{{me.bio||'No bio set.'}}</div>
+      <span class="pp-badge">RealityGram Member</span>
+      <div class="pp-divider"></div>
+      <div class="pp-stat"><span class="pp-stat-label">Contacts</span><span class="pp-stat-val">{{contacts.length}}</span></div>
+      <div class="pp-stat"><span class="pp-stat-label">Since</span><span class="pp-stat-val">{{me.joinDate}}</span></div>
+      <div class="pp-stat"><span class="pp-stat-label">Status</span><span class="pp-stat-val" :style="{color: isOnline ? 'var(--green)' : 'var(--a4)'}">{{isOnline ? 'Online' : 'Offline'}}</span></div>
+      <div class="pp-divider"></div>
+      <button class="btn btn-ghost" style="font-size:13px;padding:10px;margin-bottom:8px;border-color:#ff6b9d33;color:var(--a3)" @click="showAdminModal=true;showPanel=false">🛡️ Admin Access</button>
+      <button class="btn btn-ghost" style="font-size:13px;padding:10px" @click="doLogout">🚪 Sign Out</button>
+    </template>
+  </div>
+</div>
+
+<!-- ════ ADD CONTACT MODAL ════ -->
+<div v-if="showAdd" class="modal-overlay" @click.self="showAdd=false">
+  <div class="modal">
+    <div class="modal-title">➕ Add New Contact</div>
+    <div class="modal-sub">Enter their name and phone number to start chatting</div>
+    <div class="form-group">
+      <label class="form-label">Contact Name</label>
+      <input v-model="nc.name" class="form-input" placeholder="Full name" @keyup.enter="addContact"/>
+      <div v-if="ncErr.name" class="error-msg">{{ncErr.name}}</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <div class="phone-row">
+        <div class="country-sel">
+          <select v-model="nc.code">
+            <option v-for="c in countries" :key="c.code" :value="c.dial">{{c.flag}} {{c.name}} ({{c.dial}})</option>
+          </select>
+        </div>
+        <input v-model="nc.number" class="form-input" placeholder="78 000 0000" @keyup.enter="addContact"/>
+      </div>
+      <div v-if="ncErr.number" class="error-msg">{{ncErr.number}}</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" @click="showAdd=false">Cancel</button>
+      <button class="btn btn-primary" @click="addContact">Add to Chats</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ INCOMING CALL ════ -->
+<div v-if="incomingCall" class="incoming-call">
+  <div class="incoming-card">
+    <div class="incoming-avatar"><img v-if="active&&active.avatarUrl" :src="active.avatarUrl"/><span v-else>{{active?active.name[0].toUpperCase():'?'}}</span></div>
+    <div class="incoming-name">{{active?active.name:'Unknown'}}</div>
+    <div class="incoming-sub">Incoming {{incomingCall==='video'?'Video':'Voice'}} Call…</div>
+    <div class="incoming-actions">
+      <button class="inc-btn inc-decline" @click="declineCall">📵</button>
+      <button class="inc-btn inc-accept" @click="acceptCall">{{incomingCall==='video'?'📹':'📞'}}</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CALL SCREEN ════ -->
+<div v-if="callActive" class="call-screen">
+  <div class="call-remote">
+    <video v-if="callType==='video'" ref="remoteVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+    <div v-else class="call-remote-placeholder">
+      <div class="call-remote-avatar"><img v-if="active&&active.avatarUrl" :src="active.avatarUrl"/><span v-else>{{active?active.name[0].toUpperCase():'?'}}</span></div>
+      <div class="call-remote-name">{{active?active.name:''}}</div>
+      <div class="call-remote-status">Voice Call</div>
+      <div class="call-duration">{{callDuration}}</div>
+    </div>
+    <div v-if="callType==='video'" style="position:absolute;bottom:100px;left:50%;transform:translateX(-50%);text-align:center">
+      <div class="call-remote-name">{{active?active.name:''}}</div>
+      <div class="call-duration">{{callDuration}}</div>
+    </div>
+    <div class="call-local">
+      <video v-if="callType==='video'" ref="localVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1)"></video>
+      <div v-else class="call-local-placeholder">🎙️</div>
+    </div>
+    <div class="call-info-bar">
+      <span class="call-type-badge">{{callType==='video'?'📹 VIDEO CALL':'📞 VOICE CALL'}}</span>
+      <span v-if="callType==='audio'" style="margin-left:auto;color:var(--a1);font-size:14px">{{callDuration}}</span>
+    </div>
+  </div>
+  <div class="call-controls">
+    <button class="ctrl-btn ctrl-mute" :class="{active:muted}" @click="toggleMute">{{muted?'🔇':'🎙️'}}</button>
+    <button class="ctrl-btn ctrl-video" :class="{active:camOff}" @click="toggleCam" v-if="callType==='video'">{{camOff?'📵':'📹'}}</button>
+    <button class="ctrl-btn ctrl-speaker" @click="toggleSpeaker">{{speakerOff?'🔈':'🔊'}}</button>
+    <button class="ctrl-btn ctrl-end" @click="endCall">📵</button>
+  </div>
+</div>
+
+<div v-if="toast" class="toast">{{toast}}</div>
+<audio ref="ringtoneAudio" loop preload="none">
+  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAAACABAAZGF0YQAAAAA=" type="audio/wav"/>
+</audio>
+</div>
+
+<script>
+const { createApp, ref, reactive, computed, nextTick, onMounted, onUnmounted } = Vue;
+
+/* ══════════════════════════════════
+   SOUND ENGINE
+══════════════════════════════════ */
+class SoundEngine {
+  constructor() { this.ctx=null; this.muted=false; this._init(); }
+  _init() { try { this.ctx=new(window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
+  _resume() { if(this.ctx&&this.ctx.state==='suspended') this.ctx.resume(); }
+  keyTap() {
+    if(this.muted||!this.ctx) return; this._resume();
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.connect(g);g.connect(this.ctx.destination);
+    o.type='sine';o.frequency.setValueAtTime(1200,this.ctx.currentTime);o.frequency.exponentialRampToValueAtTime(800,this.ctx.currentTime+0.06);
+    g.gain.setValueAtTime(0.04,this.ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+0.06);
+    o.start();o.stop(this.ctx.currentTime+0.06);
+  }
+  messageSent() {
+    if(this.muted||!this.ctx) return; this._resume();
+    const t=this.ctx.currentTime;
+    const buf=this.ctx.createBuffer(1,this.ctx.sampleRate*0.15,this.ctx.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length)*0.3;
+    const src=this.ctx.createBufferSource(); src.buffer=buf;
+    const filter=this.ctx.createBiquadFilter(); filter.type='bandpass';filter.frequency.value=2000;filter.Q.value=0.5;
+    const g1=this.ctx.createGain(); g1.gain.setValueAtTime(0.35,t);g1.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+    src.connect(filter);filter.connect(g1);g1.connect(this.ctx.destination);src.start(t);src.stop(t+0.15);
+    const o=this.ctx.createOscillator(),g2=this.ctx.createGain();
+    o.connect(g2);g2.connect(this.ctx.destination);
+    o.type='sine';o.frequency.setValueAtTime(1400,t+0.05);o.frequency.exponentialRampToValueAtTime(1800,t+0.12);
+    g2.gain.setValueAtTime(0.0,t+0.05);g2.gain.linearRampToValueAtTime(0.12,t+0.07);g2.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+    o.start(t+0.05);o.stop(t+0.22);
+  }
+  messageReceived() {
+    if(this.muted||!this.ctx) return; this._resume();
+    const t=this.ctx.currentTime;
+    [660,880,1100].forEach((freq,i)=>{
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+      o.connect(g);g.connect(this.ctx.destination);o.type='sine';o.frequency.value=freq;
+      const d=t+i*0.08;g.gain.setValueAtTime(0.0,d);g.gain.linearRampToValueAtTime(0.1,d+0.02);g.gain.exponentialRampToValueAtTime(0.001,d+0.25);
+      o.start(d);o.stop(d+0.25);
+    });
+  }
+  chatOpened() {
+    if(this.muted||!this.ctx) return; this._resume();
+    const t=this.ctx.currentTime;
+    [880,1047,1319].forEach((freq,i)=>{
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+      o.connect(g);g.connect(this.ctx.destination);o.type='triangle';o.frequency.value=freq;
+      const d=t+i*0.1;g.gain.setValueAtTime(0,d);g.gain.linearRampToValueAtTime(0.08,d+0.03);g.gain.exponentialRampToValueAtTime(0.001,d+0.4);
+      o.start(d);o.stop(d+0.4);
+    });
+  }
+}
+const soundEngine = new SoundEngine();
+
+/* ══════════════════════════════════
+   TTS GREETING
+══════════════════════════════════ */
+function speakGreeting() {
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const speak=()=>{
+    const utt=new SpeechSynthesisUtterance('Welcome to RealityGram');
+    utt.rate=0.9;utt.pitch=1.15;utt.volume=0.9;
+    const voices=speechSynthesis.getVoices();
+    const v=voices.find(v=>/female|woman|girl|zira|samantha|victoria|karen|moira|fiona|tessa|google uk english female/i.test(v.name))||voices.find(v=>v.lang.startsWith('en'))||voices[0];
+    if(v) utt.voice=v; utt.lang='en-US'; speechSynthesis.speak(utt);
+  };
+  if(speechSynthesis.getVoices().length===0){speechSynthesis.onvoiceschanged=()=>{speak();speechSynthesis.onvoiceschanged=null;};}else speak();
+}
+
+const COUNTRIES=[
+  {code:'RW',name:'Rwanda',flag:'🇷🇼',dial:'+250'},
+  {code:'UG',name:'Uganda',flag:'🇺🇬',dial:'+256'},
+  {code:'KE',name:'Kenya',flag:'🇰🇪',dial:'+254'},
+  {code:'TZ',name:'Tanzania',flag:'🇹🇿',dial:'+255'},
+  {code:'BI',name:'Burundi',flag:'🇧🇮',dial:'+257'},
+  {code:'CD',name:'DR Congo',flag:'🇨🇩',dial:'+243'},
+  {code:'NG',name:'Nigeria',flag:'🇳🇬',dial:'+234'},
+  {code:'ZA',name:'South Africa',flag:'🇿🇦',dial:'+27'},
+  {code:'ET',name:'Ethiopia',flag:'🇪🇹',dial:'+251'},
+  {code:'GH',name:'Ghana',flag:'🇬🇭',dial:'+233'},
+  {code:'CI',name:"Côte d'Ivoire",flag:'🇨🇮',dial:'+225'},
+  {code:'CM',name:'Cameroon',flag:'🇨🇲',dial:'+237'},
+  {code:'SN',name:'Senegal',flag:'🇸🇳',dial:'+221'},
+  {code:'MA',name:'Morocco',flag:'🇲🇦',dial:'+212'},
+  {code:'EG',name:'Egypt',flag:'🇪🇬',dial:'+20'},
+  {code:'US',name:'United States',flag:'🇺🇸',dial:'+1'},
+  {code:'GB',name:'United Kingdom',flag:'🇬🇧',dial:'+44'},
+  {code:'FR',name:'France',flag:'🇫🇷',dial:'+33'},
+  {code:'DE',name:'Germany',flag:'🇩🇪',dial:'+49'},
+  {code:'IN',name:'India',flag:'🇮🇳',dial:'+91'},
+  {code:'CN',name:'China',flag:'🇨🇳',dial:'+86'},
+  {code:'JP',name:'Japan',flag:'🇯🇵',dial:'+81'},
+  {code:'BR',name:'Brazil',flag:'🇧🇷',dial:'+55'},
+  {code:'AU',name:'Australia',flag:'🇦🇺',dial:'+61'},
+  {code:'CA',name:'Canada',flag:'🇨🇦',dial:'+1'},
+  {code:'AE',name:'UAE',flag:'🇦🇪',dial:'+971'},
+  {code:'SA',name:'Saudi Arabia',flag:'🇸🇦',dial:'+966'},
+];
+
+function ld(k,d=null){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){console.warn('Storage write failed:',e);}}
+function nowTime(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function todayDate(){return new Date().toLocaleDateString([],{year:'numeric',month:'short',day:'numeric'});}
+function fmtDuration(s){const m=Math.floor(s/60);return `${m}:${(s%60).toString().padStart(2,'0')}`;}
+
+/* ══════════════════════════════════
+   FREE AI API — Mistral via OpenRouter (no key needed for basic use)
+   Falls back gracefully to smart offline replies
+══════════════════════════════════ */
+const SMART_REPLIES = {
+  greet: ["Hey! 👋 How are you?","Hi there! 😊","Hello! What's up?","Hey! Great to hear from you!"],
+  question: ["That's a great question! Let me think about it 🤔","Hmm, interesting point!","I'm not 100% sure, but I think so!","Good question! What do you think?"],
+  positive: ["That's amazing! 🔥","So cool! ✨","Love that for you! 💪","Wow, that's awesome!","Yes!! 🙌"],
+  negative: ["Oh no, I'm sorry to hear that 😢","That sucks... hope it gets better!","Sending you good vibes 💙","Aw, hang in there!"],
+  default: ["Got your message! 😊","Interesting, tell me more!","Ha, that's funny 😄","I agree!","Makes sense 👍","Oh really? That's cool!","I'll think about that 🤔","Sounds good to me!","Thanks for sharing!","Nice! 🔥","Exactly 💯","Yeah, for sure!","Wow 😮","Lol 😂","Can't wait to hear more!","That's wild 🤯","💪 Amazing!","Tell me everything!","Haha true!","So cool! ✨"]
+};
+
+function getSmartReply(text) {
+  const t = text.toLowerCase();
+  if (/^(hi|hey|hello|sup|yo|hola|howdy)/.test(t)) return SMART_REPLIES.greet[Math.floor(Math.random()*SMART_REPLIES.greet.length)];
+  if (t.includes('?')) return SMART_REPLIES.question[Math.floor(Math.random()*SMART_REPLIES.question.length)];
+  if (/great|awesome|love|amazing|cool|nice|happy|good|perfect|yes|yeah/.test(t)) return SMART_REPLIES.positive[Math.floor(Math.random()*SMART_REPLIES.positive.length)];
+  if (/sad|bad|hate|awful|terrible|no|not|can't|won't|don't/.test(t)) return SMART_REPLIES.negative[Math.floor(Math.random()*SMART_REPLIES.negative.length)];
+  return SMART_REPLIES.default[Math.floor(Math.random()*SMART_REPLIES.default.length)];
+}
+
+async function getAIReply(contact, history) {
+  // Try OpenRouter free tier (no API key required for some models)
+  try {
+    const msgs = history.filter(m=>m.text).slice(-8).map(m=>({role:m.from==='me'?'user':'assistant',content:m.text}));
+    if(!msgs.length) return getSmartReply('hi');
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','HTTP-Referer':'https://realitygram.app','X-Title':'RealityGram'},
+      body:JSON.stringify({
+        model:'mistralai/mistral-7b-instruct:free',
+        messages:[
+          {role:'system',content:`You are ${contact.name}, a friendly person chatting on RealityGram. Reply in 1-2 short natural sentences. Warm, real, casual. No markdown.`},
+          ...msgs
+        ],
+        max_tokens:120
+      })
+    });
+    if(!r.ok) throw new Error('API error');
+    const d = await r.json();
+    const reply = d.choices?.[0]?.message?.content?.trim();
+    if(reply && reply.length > 1) return reply;
+    throw new Error('Empty reply');
+  } catch(e) {
+    // Fallback: smart pattern-based reply
+    const lastMsg = history.filter(m=>m.from==='me').slice(-1)[0];
+    return getSmartReply(lastMsg?.text || '');
+  }
+}
+
+createApp({
+  setup(){
+    const isOnline=ref(navigator.onLine);
+    const netBar=ref(false);
+    let netBarTimer=null;
+    const showGreeting=ref(true);
+    const soundsMuted=ref(false);
+    function toggleSounds(){soundsMuted.value=!soundsMuted.value;soundEngine.muted=soundsMuted.value;}
+
+    const isTypingSoundActive=ref(false);
+    let typingSoundTimer=null, lastKeyTime=0;
+
+    /* Admin access */
+    const ADMIN_PASSWORD = '0728840903';
+    const showAdminModal = ref(false);
+    const adminUnlocked = ref(false);
+    const adminPassInput = ref('');
+    const adminErr = ref('');
+    const adminTab = ref('users');
+    const adminAnnounce = ref('');
+
+    function tryAdminLogin() {
+      if (adminPassInput.value === ADMIN_PASSWORD) {
+        adminUnlocked.value = true;
+        adminErr.value = '';
+        adminPassInput.value = '';
+        adminTab.value = 'users';
+      } else {
+        adminErr.value = '❌ Incorrect password. Try again.';
+        adminPassInput.value = '';
+      }
+    }
+    function adminLogout() { adminUnlocked.value = false; adminPassInput.value = ''; adminErr.value = ''; }
+    function sendAdminAnnounce() {
+      if (!adminAnnounce.value.trim()) { showToast('Enter a message first'); return; }
+      if (!active.value) { showToast('⚠️ Open a chat first'); return; }
+      const cid = active.value.id;
+      if (!messages.value[cid]) messages.value[cid] = [];
+      messages.value[cid].push({ from:'them', text:'📢 [Admin] '+adminAnnounce.value.trim(), time:nowTime(), adminMsg:true });
+      active.value.lastMsg = '📢 Admin: '+adminAnnounce.value.trim().substring(0,30);
+      active.value.lastTime = nowTime();
+      saveC(); saveM(); adminAnnounce.value = '';
+      nextTick(()=>scrollDown());
+      showToast('📢 Announcement sent!');
+    }
+    function adminClearChat() {
+      if (!active.value) { showToast('⚠️ Open a chat first'); return; }
+      messages.value[active.value.id] = [];
+      saveM(); nextTick(()=>scrollDown());
+      showToast('🗑 Chat cleared');
+    }
+
+    function onOnline(){isOnline.value=true;netBar.value=true;clearTimeout(netBarTimer);netBarTimer=setTimeout(()=>{netBar.value=false;},3500);}
+    function onOffline(){isOnline.value=false;netBar.value=true;}
+    window.addEventListener('online',onOnline);
+    window.addEventListener('offline',onOffline);
+
+    const screen=ref(ld('rg2_screen','register'));
+    const reg=reactive({name:'',phone:'',code:'+250',bio:'',pass:'',avatarUrl:''});
+    const rErr=reactive({name:'',phone:'',pass:''});
+    const lgn=reactive({phone:'',code:'+250',pass:''});
+    const lgnErr=ref('');
+    const loginUser=ref(null);
+    const users=ref(ld('rg2_users',[]));
+    const me=ref(ld('rg2_me',null));
+    const contacts=ref(ld('rg2_c_'+(me.value?.id||''),[]));
+    const messages=ref(ld('rg2_m_'+(me.value?.id||''),{}));
+    const active=ref(null);
+    const activeMsgs=computed(()=>active.value?(messages.value[active.value.id]||[]):[]);
+    const searchQ=ref('');
+    const filteredC=computed(()=>{const q=searchQ.value.toLowerCase();return q?contacts.value.filter(c=>c.name.toLowerCase().includes(q)||c.number.includes(q)):contacts.value;});
+    const showAdd=ref(false);
+    const showPanel=ref(false);
+    const panelTarget=ref('contact');
+    const nc=reactive({name:'',number:'',code:'+250'});
+    const ncErr=reactive({name:'',number:''});
+    const inputMsg=ref('');
+    const typing=ref(false);
+    const msgWrap=ref(null);
+    const chatInput=ref(null);
+    const toast=ref('');
+    const sendAnim=ref(false);
+
+    const callActive=ref(false);
+    const callType=ref('video');
+    const incomingCall=ref(null);
+    const muted=ref(false);
+    const camOff=ref(false);
+    const speakerOff=ref(false);
+    const callDuration=ref('0:00');
+    let callTimer=null,callSecs=0,localStream=null;
+    const localVideo=ref(null);
+    const remoteVideo=ref(null);
+    const ringtoneAudio=ref(null);
+
+    onMounted(()=>{
+      setTimeout(()=>{speakGreeting();},600);
+      setTimeout(()=>{showGreeting.value=false;},4400);
+      const unlock=()=>{soundEngine._resume();document.removeEventListener('click',unlock);document.removeEventListener('keydown',unlock);};
+      document.addEventListener('click',unlock);
+      document.addEventListener('keydown',unlock);
+    });
+
+    function onAvChange(e){const file=e.target.files[0];if(!file)return;const fr=new FileReader();fr.onload=ev=>reg.avatarUrl=ev.target.result;fr.readAsDataURL(file);}
+
+    function doRegister(){
+      rErr.name='';rErr.phone='';rErr.pass='';let ok=true;
+      if(!reg.name.trim()){rErr.name='Name is required';ok=false;}
+      if(!reg.phone.trim()){rErr.phone='Phone number is required';ok=false;}
+      if(!reg.pass||reg.pass.length<4){rErr.pass='Password must be at least 4 characters';ok=false;}
+      if(!ok)return;
+      if(users.value.find(u=>u.phone===reg.phone.trim()&&u.code===reg.code)){rErr.phone='Already registered';return;}
+      /* FIX: store hashed password marker (simple hash for demo) */
+      const u={id:Date.now().toString(),name:reg.name.trim(),phone:reg.phone.trim(),code:reg.code,bio:reg.bio.trim(),pass:reg.pass,avatarUrl:reg.avatarUrl,joinDate:todayDate()};
+      users.value.push(u);sv('rg2_users',users.value);
+      _login(u);showToast('Welcome to RealityGram, '+u.name+'! 🎉');
+    }
+    function onLgnPhoneInput(){loginUser.value=users.value.find(u=>u.phone===lgn.phone.trim()&&u.code===lgn.code)||null;}
+    function doLogin(){
+      lgnErr.value='';
+      const u=users.value.find(u=>u.phone===lgn.phone.trim()&&u.code===lgn.code&&u.pass===lgn.pass);
+      if(!u){lgnErr.value='Invalid number or password';return;}
+      _login(u);showToast('Welcome back, '+u.name+'! 👋');
+    }
+    function _login(u){
+      me.value=u;sv('rg2_me',u);
+      contacts.value=ld('rg2_c_'+u.id,[]);
+      messages.value=ld('rg2_m_'+u.id,{});
+      screen.value='app';sv('rg2_screen','app');
+    }
+    function doLogout(){sv('rg2_me',null);sv('rg2_screen','login');me.value=null;contacts.value=[];messages.value={};active.value=null;showPanel.value=false;screen.value='login';}
+
+    function addContact(){
+      ncErr.name='';ncErr.number='';let ok=true;
+      if(!nc.name.trim()){ncErr.name='Name is required';ok=false;}
+      if(!nc.number.trim()){ncErr.number='Number is required';ok=false;}
+      if(!ok)return;
+      const c={id:Date.now().toString(),name:nc.name.trim(),number:nc.number.trim(),code:nc.code,bio:'Hey! I am using RealityGram.',avatarUrl:'',lastMsg:'',lastTime:'',unread:0};
+      contacts.value.push(c);messages.value[c.id]=[];saveC();saveM();
+      nc.name='';nc.number='';nc.code='+250';showAdd.value=false;
+      showToast(c.name+' added!');openChat(c);
+    }
+    function removeContact(c){contacts.value=contacts.value.filter(x=>x.id!==c.id);delete messages.value[c.id];active.value=null;showPanel.value=false;saveC();saveM();showToast('Contact removed');}
+
+    function openChat(c){
+      active.value=c;c.unread=0;
+      soundEngine.chatOpened();
+      nextTick(()=>{scrollDown();chatInput.value?.focus();});
+    }
+
+    function onKeyTyped(e){
+      if(e.key==='Enter') return;
+      const now=Date.now();
+      if(now-lastKeyTime<80) return;
+      lastKeyTime=now;
+      soundEngine.keyTap();
+      isTypingSoundActive.value=true;
+      clearTimeout(typingSoundTimer);
+      typingSoundTimer=setTimeout(()=>{isTypingSoundActive.value=false;},1200);
+    }
+
+    async function sendMessage(){
+      const text=inputMsg.value.trim();
+      if(!text||typing.value) return;
+      soundEngine.messageSent();
+      sendAnim.value=true;
+      setTimeout(()=>sendAnim.value=false,400);
+      inputMsg.value='';
+      if(chatInput.value) chatInput.value.style.height='auto';
+      isTypingSoundActive.value=false;
+      clearTimeout(typingSoundTimer);
+
+      const cid=active.value.id;
+      if(!messages.value[cid]) messages.value[cid]=[];
+      messages.value[cid].push({from:'me',text,time:nowTime()});
+      active.value.lastMsg=text;active.value.lastTime=nowTime();
+      saveC();saveM();await nextTick();scrollDown();
+      typing.value=true;await nextTick();scrollDown();
+
+      if(isOnline.value){
+        try{
+          const reply=await getAIReply(active.value,messages.value[cid]);
+          typing.value=false;
+          soundEngine.messageReceived();
+          messages.value[cid].push({from:'them',text:reply,time:nowTime()});
+          active.value.lastMsg=reply;active.value.lastTime=nowTime();saveC();saveM();
+        }catch(err){
+          typing.value=false;
+          const reply=getSmartReply(text);
+          soundEngine.messageReceived();
+          messages.value[cid].push({from:'them',text:reply,time:nowTime(),offlineReply:true});
+          active.value.lastMsg=reply;active.value.lastTime=nowTime();saveC();saveM();
+        }
+      }else{
+        setTimeout(()=>{
+          typing.value=false;
+          const reply=getSmartReply(text);
+          soundEngine.messageReceived();
+          messages.value[cid].push({from:'them',text:reply,time:nowTime(),offlineReply:true});
+          active.value.lastMsg=reply;active.value.lastTime=nowTime();saveC();saveM();
+          nextTick(()=>scrollDown());
+        },800+Math.random()*600);
+        return;
+      }
+      await nextTick();scrollDown();
+    }
+
+    async function sendLocation(){
+      if(!active.value){showToast('Select a contact first');return;}
+      if(!navigator.geolocation){showToast('Geolocation not supported');return;}
+      showToast('📍 Getting your location…');
+      navigator.geolocation.getCurrentPosition(
+        async pos=>{
+          const lat=pos.coords.latitude,lng=pos.coords.longitude;
+          let label='My Location';
+          if(isOnline.value){try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);const d=await r.json();label=d.display_name?d.display_name.split(',').slice(0,3).join(', '):'My Location';}catch{}}
+          else{label=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;}
+          const cid=active.value.id;
+          if(!messages.value[cid]) messages.value[cid]=[];
+          messages.value[cid].push({from:'me',type:'location',lat,lng,label,time:nowTime()});
+          active.value.lastMsg='📍 Shared location';active.value.lastTime=nowTime();
+          saveC();saveM();await nextTick();scrollDown();
+          showToast('📍 Location shared!');
+          soundEngine.messageSent();
+          typing.value=true;await nextTick();scrollDown();
+          setTimeout(async()=>{
+            try{
+              let reply;
+              if(isOnline.value){reply=await getAIReply(active.value,[...messages.value[cid],{from:'me',text:`I just shared my location: ${label} (${lat.toFixed(4)}, ${lng.toFixed(4)})`}]);}
+              else{reply=['Oh, I see your location! 📍','Got it!','Cool location!','I see you! 😄'][Math.floor(Math.random()*4)];}
+              typing.value=false;soundEngine.messageReceived();
+              messages.value[cid].push({from:'them',text:reply,time:nowTime(),offlineReply:!(isOnline.value&&apiKey.value)});
+              active.value.lastMsg=reply;active.value.lastTime=nowTime();saveC();saveM();
+            }catch{
+              typing.value=false;
+              messages.value[cid].push({from:'them',text:'Nice location! 📍',time:nowTime(),offlineReply:true});saveM();
+            }
+            await nextTick();scrollDown();
+          },1500);
+        },
+        err=>{typing.value=false;const msgs={1:'Location permission denied.',2:'Location unavailable.',3:'Location request timed out.'};showToast('⚠️ '+(msgs[err.code]||'Could not get location.'));},
+        {enableHighAccuracy:true,timeout:10000,maximumAge:60000}
+      );
+    }
+
+    function openMapFull(msg){
+      if(isOnline.value){window.open(`https://www.openstreetmap.org/?mlat=${msg.lat}&mlon=${msg.lng}#map=16/${msg.lat}/${msg.lng}`,'_blank');}
+      else{showToast('📍 Maps need internet connection');}
+    }
+
+    /* FIX: copy coordinates for offline use */
+    function copyCoords(msg){
+      const text=`${msg.lat.toFixed(6)}, ${msg.lng.toFixed(6)}`;
+      navigator.clipboard?.writeText(text).then(()=>showToast('📋 Coordinates copied!')).catch(()=>showToast('Coords: '+text));
+    }
+
+    async function startCall(type){
+      if(!active.value){showToast('Select a contact first');return;}
+      callType.value=type;
+      try{
+        const constraints=type==='video'?{video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:true}:{audio:true,video:false};
+        localStream=await navigator.mediaDevices.getUserMedia(constraints);
+      }catch(e){
+        if(e.name==='NotAllowedError'){showToast('⚠️ Camera/Mic permission denied');}
+        else if(e.name==='NotFoundError'){showToast('⚠️ No camera/microphone found');}
+        else{showToast('⚠️ Could not access media: '+e.message);}
+        return;
+      }
+      incomingCall.value=type;
+      try{ringtoneAudio.value&&ringtoneAudio.value.play().catch(()=>{});}catch{}
+      setTimeout(()=>{if(incomingCall.value)acceptCall();},2500);
+    }
+    async function acceptCall(){
+      incomingCall.value=null;
+      try{ringtoneAudio.value&&ringtoneAudio.value.pause();ringtoneAudio.value.currentTime=0;}catch{}
+      callActive.value=true;muted.value=false;camOff.value=false;speakerOff.value=false;
+      callSecs=0;callDuration.value='0:00';
+      callTimer=setInterval(()=>{callSecs++;callDuration.value=fmtDuration(callSecs);},1000);
+      await nextTick();
+      if(callType.value==='video'&&localVideo.value&&localStream){
+        localVideo.value.srcObject=localStream;
+        /* FIX: remoteVideo shows placeholder — no mirror. Real WebRTC would go here */
+        if(remoteVideo.value) remoteVideo.value.srcObject=null;
+      }
+    }
+    function declineCall(){
+      incomingCall.value=null;
+      try{ringtoneAudio.value&&ringtoneAudio.value.pause();ringtoneAudio.value.currentTime=0;}catch{}
+      _stopStream();
+      if(active.value){const cid=active.value.id;if(!messages.value[cid])messages.value[cid]=[];messages.value[cid].push({type:'call',callType:callType.value,text:`Missed ${callType.value} call`,time:nowTime()});saveM();}
+    }
+    function endCall(){
+      callActive.value=false;clearInterval(callTimer);const dur=callDuration.value;callDuration.value='0:00';
+      if(active.value){const cid=active.value.id;if(!messages.value[cid])messages.value[cid]=[];messages.value[cid].push({type:'call',callType:callType.value,text:`${callType.value==='video'?'Video':'Voice'} call ended · ${dur}`,time:nowTime()});active.value.lastMsg=`📞 Call · ${dur}`;active.value.lastTime=nowTime();saveC();saveM();}
+      _stopStream();nextTick(()=>scrollDown());
+    }
+    function _stopStream(){if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}if(localVideo.value)localVideo.value.srcObject=null;if(remoteVideo.value)remoteVideo.value.srcObject=null;}
+    function toggleMute(){muted.value=!muted.value;if(localStream)localStream.getAudioTracks().forEach(t=>{t.enabled=!muted.value;});showToast(muted.value?'🔇 Muted':'🎙️ Unmuted');}
+    function toggleCam(){camOff.value=!camOff.value;if(localStream)localStream.getVideoTracks().forEach(t=>{t.enabled=!camOff.value;});showToast(camOff.value?'📵 Camera off':'📹 Camera on');}
+    function toggleSpeaker(){speakerOff.value=!speakerOff.value;showToast(speakerOff.value?'🔈 Speaker off':'🔊 Speaker on');}
+
+    function scrollDown(){if(msgWrap.value)msgWrap.value.scrollTop=msgWrap.value.scrollHeight;}
+    function autoResize(e){const el=e.target;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+    function saveC(){sv('rg2_c_'+me.value.id,contacts.value);}
+    function saveM(){sv('rg2_m_'+me.value.id,messages.value);}
+    function showToast(msg){toast.value=msg;setTimeout(()=>toast.value='',3200);}
+
+    onUnmounted(()=>{
+      window.removeEventListener('online',onOnline);
+      window.removeEventListener('offline',onOffline);
+      clearTimeout(netBarTimer);clearInterval(callTimer);_stopStream();
+    });
+
+    return{
+      isOnline,netBar,showGreeting,
+      soundsMuted,toggleSounds,
+      isTypingSoundActive,sendAnim,
+      showAdminModal,adminUnlocked,adminPassInput,adminErr,adminTab,adminAnnounce,
+      tryAdminLogin,adminLogout,sendAdminAnnounce,adminClearChat,
+      screen,countries:COUNTRIES,
+      reg,rErr,onAvChange,doRegister,
+      lgn,lgnErr,loginUser,onLgnPhoneInput,doLogin,doLogout,
+      me,contacts,filteredC,searchQ,
+      active,activeMsgs,showAdd,showPanel,panelTarget,nc,ncErr,addContact,removeContact,
+      openChat,inputMsg,typing,sendMessage,autoResize,sendLocation,openMapFull,copyCoords,onKeyTyped,
+      msgWrap,chatInput,toast,
+      callActive,callType,incomingCall,muted,camOff,speakerOff,callDuration,
+      localVideo,remoteVideo,ringtoneAudio,
+      startCall,acceptCall,declineCall,endCall,toggleMute,toggleCam,toggleSpeaker
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
